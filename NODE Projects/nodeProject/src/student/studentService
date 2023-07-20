@@ -1,0 +1,131 @@
+var studentModel = require('./studentModel.js');
+var key = '123456789trytrytry';
+var encryptor = require('simple-encryptor')(key);
+
+module.exports.createStudentDBService = (studentDetails) => {
+  return new Promise((resolve, reject) => {
+    var stuModelData = new studentModel();
+    
+    stuModelData.firstname = studentDetails.firstname;
+    stuModelData.lastname = studentDetails.lastname;
+    stuModelData.email = studentDetails.email;
+    stuModelData.password = studentDetails.password;
+    var encrypted = encryptor.encrypt(studentDetails.password);
+    
+    stuModelData.password = encrypted;
+    
+    stuModelData.save()
+      .then((result) => {
+        resolve(true);
+      })
+      .catch((error) => {
+        reject(false);
+      });
+  });
+}
+
+module.exports.loginDBService = (studentDetails) => {
+  return new Promise((resolve, reject) => {
+    studentModel.findOne({ email: studentDetails.email })
+      .then((result) => {
+        if (result) {
+          var decrypted = encryptor.decrypt(result.password);
+
+          if (decrypted == studentDetails.password) {
+            resolve({ status: true, message: "Student validated successfully" });
+          } else {
+            reject({ status: false, message: "Student not validated" });
+          }
+        } else {
+          reject({ status: false, message: "Invalid student details" });
+        }
+      })
+      .catch((error) => {
+        reject({ status: false, message: "Error retrieving student details" });
+      });
+  });
+}
+  
+
+module.exports.forgotDBService = (studentDetails) => {
+  return new Promise((resolve, reject) => {
+    studentModel.findOne({ email: studentDetails.email })
+      .then(async (result) => {
+        if (result) {
+          // Email exists in the database, update password
+          result.password = encryptor.encrypt(studentDetails.password); // Update the password in the document
+          await result.save(); // Save the updated document
+          resolve({ status: true, message: "Password updated successfully" });
+        } else {
+          reject({ status: false, message: "Invalid student details" });
+        }
+      })
+      .catch((error) => {
+        reject({ status: false, message: "Error retrieving student details" });
+      });
+  });
+};
+
+// module.exports.loginDBService=(studentDetails)=>
+// {
+//     return new Promise(function myFn(resolve,reject)
+//     {
+//         studentModel.findOne({email:studentDetails.email},function getresult(errorvalue,result)
+//         {
+//             if(errorvalue)
+//             {
+//                 reject({status:false,message:"Invalid Data"});
+//             }
+//             else
+//             {
+//                 if(result!=undefined && result!=null)
+//                 {
+//                     var decrypted=encryptor.decrypt(result.password);
+    
+//                     if(decrypted==studentDetails.password)
+//                     {
+//                         resolve({status:true,message:"Student validated succeesfully"});
+//                     }
+//                     else
+//                     {
+//                         reject({status:false,message:"Student not valisate"});
+//                     }
+//                 }
+//                 else{
+//                     reject({status:false,message:"Students error details"});
+//                 }
+//             }
+//         });
+       
+//     }); 
+// } 
+
+
+// var studentModel= require('./studentModel.js');
+// var key='123456789trytrytry';
+// var encryptor=require('simple-encryptor')(key);
+
+// module.exports.createStudentDBService=(studentDetails)=>{
+//     return new Promise(function myFn(resolves ,rejects){
+        
+//         var stuModelData=new studentModel();
+       
+//         stuModelData.firstNmae=studentDetails.firstNmae;
+//         stuModelData.lastname=studentDetails.lastname;
+//         stuModelData.email=studentDetails.email;
+//         stuModelData.password=studentDetails.password;
+//         var encrypted=encryptor.encrypt(studentDetails.password);
+
+//         stuModelData.password=encrypted;
+
+//         stuModelData.save(function resultHandle(error,result){
+//             if(error){
+//                 rejects(false);
+
+//             }else{
+//                 resolves(true);
+//             } 
+//         });
+//     });
+// }
+
